@@ -8,6 +8,14 @@ import (
 func main() {
 	fmt.Println("Starting server...")
 
+	type apiConfig struct {
+		fileserverHits int	
+	}
+
+	func (cfg *apiConfig) middleWareMetricsInc(next http.Handler) http.Handler {
+		cfg.fileserverHits += 1;
+		return next
+	}
 	// Create a new ServeMux
 	mux := http.NewServeMux()
 
