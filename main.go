@@ -2,46 +2,40 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
+	"nhuxoll/bdd_chirpy/handler"
+	"nhuxoll/bdd_chirpy/middleware"
 )
 
 func main() {
 	fmt.Println("Starting server...")
+	const filepathRoot = "."
+	const port = "8080"
 
-	type apiConfig struct {
-		fileserverHits int	
+	apiCfg := middleware.ApiConfig{
+		FileserverHits: 0,
 	}
 
-	func (cfg *apiConfig) middleWareMetricsInc(next http.Handler) http.Handler {
-		cfg.fileserverHits += 1;
-		return next
-	}
-	// Create a new ServeMux
 	mux := http.NewServeMux()
-
-	// Handle root path
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
-		// Check if the path is not the root
-		if r.URL.Path != "/healthz" {
-			w.WriteHeader(http.StatusServiceUnavailable)
-			return
-		}
-		// Provide a response for the root path
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
-	})
-	mux.Handle("/app/", http.StripPrefix("/app/", http.FileServer(http.Dir("."))))
-
-	// Create a new server with the ServeMux as the handler
-	server := &http.Server{
-		Addr:    ":8080", // Set the server to listen on port 8080
+	mux.Handle("/app/*", apiCfg.MiddlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))))
+	mux.HandleFunc("GET /api/healthz", handler.HandlerReadiness)
+	mux.HandleFunc("GET /admin/metrics", apiCfg.HandlerMetrics)
+	mux.HandleFunc("/api/reset", apiCfg.HandlerMetricsReset)
+	mux.HandleFunc("POST /api/validate_chirp", handler.HandlerChirpsValidate)
+	srv := &http.Server{
+		Addr:    ":" + port,
 		Handler: mux,
 	}
-
 	// Start the server
-	err := server.ListenAndServe()
+	err := srv.ListenAndServe()
 	if err != nil {
 		fmt.Printf("Server failed to start: %v\n", err)
 	}
+}
+func middlewareLog(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("%s %s", r.Method, r.URL.Path)
+		next.ServeHTTP(w, r)
+	})
 }
