@@ -1,41 +1,47 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
-	"nhuxoll/bdd_chirpy/handler"
-	"nhuxoll/bdd_chirpy/middleware"
+	"nhuxoll/bdd_chirpy/internal/database"
 )
 
+type apiConfig struct {
+	fileserverHits int
+	DB             *database.DB
+}
+
 func main() {
-	fmt.Println("Starting server...")
 	const filepathRoot = "."
 	const port = "8080"
 
-	apiCfg := middleware.ApiConfig{
-		FileserverHits: 0,
+	db, err := database.NewDB("database.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	apiCfg := apiConfig{
+		fileserverHits: 0,
+		DB:             db,
 	}
 
 	mux := http.NewServeMux()
-	mux.Handle("/app/*", apiCfg.MiddlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))))
-	mux.HandleFunc("GET /api/healthz", handler.HandlerReadiness)
-	mux.HandleFunc("GET /admin/metrics", apiCfg.HandlerMetrics)
-	mux.HandleFunc("/api/reset", apiCfg.HandlerMetricsReset)
-	mux.HandleFunc("POST /api/validate_chirp", handler.HandlerChirpsValidate)
+	fsHandler := apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot))))
+	mux.Handle("/app/*", fsHandler)
+
+	mux.HandleFunc("GET /api/healthz", handlerReadiness)
+	mux.HandleFunc("GET /api/reset", apiCfg.handlerReset)
+	mux.HandleFunc("POST /api/chirps", apiCfg.handlerChirpsCreate)
+	mux.HandleFunc("GET /api/chirps", apiCfg.handlerChirpsRetrieve)
+
+	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
+
 	srv := &http.Server{
 		Addr:    ":" + port,
 		Handler: mux,
 	}
-	// Start the server
-	err := srv.ListenAndServe()
-	if err != nil {
-		fmt.Printf("Server failed to start: %v\n", err)
-	}
+
+	log.Printf("Serving files from %s on port: %s\n", filepathRoot, port)
+	log.Fatal(srv.ListenAndServe())
 }
-func middlewareLog(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("%s %s", r.Method, r.URL.Path)
-		next.ServeHTTP(w, r)
-	})
-}
+
