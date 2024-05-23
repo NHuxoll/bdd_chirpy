@@ -3,16 +3,24 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+
+	"nhuxoll/bdd_chirpy/internal/auth"
 )
 
-type User struct {
+type ReturnUser struct {
 	ID    int    `json:"id"`
 	EMail string `json:"email"`
+}
+type User struct {
+	ID       int    `json:"id"`
+	EMail    string `json:"email"`
+	Password string `json:"password"`
 }
 
 func (cfg *apiConfig) handlerUsersCreate(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		EMail string `json:"email"`
+		Password string `json:"password"`
+		EMail    string `json:"email"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -22,14 +30,17 @@ func (cfg *apiConfig) handlerUsersCreate(w http.ResponseWriter, r *http.Request)
 		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters")
 		return
 	}
-
-	user, err := cfg.DB.CreateUser(params.EMail)
+	hashedPass, err := auth.HashPassword(params.Password)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Couldn't create user")
+
+		respondWithError(w, http.StatusInternalServerError, "Couldn't hash password")
+	}
+	user, err := cfg.DB.CreateUser(params.EMail, hashedPass)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "User already exists")
 		return
 	}
-
-	respondWithJSON(w, http.StatusCreated, User{
+	respondWithJSON(w, http.StatusCreated, ReturnUser{
 		ID:    user.ID,
 		EMail: user.EMail,
 	})
@@ -61,4 +72,3 @@ func (cfg *apiConfig) handlerUsersCreate(w http.ResponseWriter, r *http.Request)
 // 	cleaned := strings.Join(words, " ")
 // 	return cleaned
 // }
-
