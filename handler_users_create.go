@@ -10,6 +10,7 @@ import (
 type ReturnUser struct {
 	ID    int    `json:"id"`
 	EMail string `json:"email"`
+	Token string `json:"token"`
 }
 type User struct {
 	ID       int    `json:"id"`

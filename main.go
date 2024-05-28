@@ -6,14 +6,20 @@ import (
 	"net/http"
 	"nhuxoll/bdd_chirpy/internal/database"
 	"os"
+
+	"github.com/joho/godotenv"
 )
 
 type apiConfig struct {
 	fileserverHits int
 	DB             *database.DB
+	jwtSecret      string
 }
 
 func main() {
+	godotenv.Load()
+	jwt_secret := os.Getenv("JWT_SECRET")
+
 	dbg := flag.Bool("debug", false, "Enable debug mode")
 	flag.Parse()
 	if *dbg {
@@ -31,6 +37,7 @@ func main() {
 
 	apiCfg := apiConfig{
 		fileserverHits: 0,
+		jwtSecret:      jwt_secret,
 		DB:             db,
 	}
 
@@ -45,6 +52,7 @@ func main() {
 	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.handlerChirpsRetrieveById)
 
 	mux.HandleFunc("POST /api/users", apiCfg.handlerUsersCreate)
+	mux.HandleFunc("PUT /api/users", apiCfg.handlerUsersUpdate)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
 	mux.HandleFunc("POST /api/login", apiCfg.handlerUserLogin)
 

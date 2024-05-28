@@ -7,9 +7,6 @@ import (
 	"sync"
 )
 
-// var ErrAlreadyExists = errors.New("already exists")
-// var ErrNotExist = errors.New("does not exist")
-
 type DB struct {
 	path string
 	mu   *sync.RWMutex
