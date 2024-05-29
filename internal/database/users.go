@@ -57,9 +57,10 @@ func (db *DB) UpdateUser(email, password string, id int) (User, error) {
 		return User{}, err
 
 	}
-	user, err := db.GetUserById(id)
-	if err != nil {
-		return User{}, err
+	user, ok := dbStructure.Users[id]
+	if !ok {
+
+		return User{}, errors.New("User not found")
 	}
 	if password != "" {
 		user.Password = password
@@ -68,6 +69,10 @@ func (db *DB) UpdateUser(email, password string, id int) (User, error) {
 		user.EMail = email
 	}
 	dbStructure.Users[id] = user
+
+	if err = db.writeDB(dbStructure); err != nil {
+		return User{}, err
+	}
 	return user, nil
 }
 

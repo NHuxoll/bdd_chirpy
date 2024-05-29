@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"nhuxoll/bdd_chirpy/internal/auth"
+	"strconv"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v5"
@@ -17,7 +18,7 @@ func (cfg *apiConfig) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
 		EMail      string `json:"email"`
 		ExpireTime int    `json:"expires_in_seconds"`
 	}
-	var expTime time.Time
+	var expTime time.Duration
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
 	err := decoder.Decode(&params)
@@ -38,16 +39,16 @@ func (cfg *apiConfig) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if params.ExpireTime == 0 {
-		expTime = time.Now().Add(time.Duration(time.Hour * 24))
+		expTime = time.Duration(time.Hour * 24)
 	} else {
-		expTime = time.Now().Add(time.Duration(int(time.Second) * params.ExpireTime))
+		expTime = time.Duration(int(time.Second) * params.ExpireTime)
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-		Issuer:    "chirpy",
-		IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
-		ExpiresAt: jwt.NewNumericDate(expTime),
-		Subject:   fmt.Sprintf("{user.ID}"),
-	})
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
+		&jwt.RegisteredClaims{
+			Issuer:    "chirpy",
+			IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
+			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(expTime)),
+			Subject:   strconv.Itoa(user.ID)})
 	jwt, err := token.SignedString([]byte(cfg.jwtSecret))
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, fmt.Sprint(err))

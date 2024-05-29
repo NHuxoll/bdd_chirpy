@@ -46,6 +46,7 @@ func (cfg *apiConfig) handlerUsersUpdate(w http.ResponseWriter, r *http.Request)
 	// Token is valid, proceed with your logic to extract the user ID, etc.
 
 	decoder := json.NewDecoder(r.Body)
+	defer r.Body.Close()
 	params := parameters{}
 	err = decoder.Decode(&params)
 	if err != nil {
@@ -56,6 +57,7 @@ func (cfg *apiConfig) handlerUsersUpdate(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 
 		respondWithError(w, http.StatusInternalServerError, "Couldn't hash password")
+		return
 	}
 	// Extract user ID from token claims
 	userIDStr := claims.Subject
@@ -74,10 +76,10 @@ func (cfg *apiConfig) handlerUsersUpdate(w http.ResponseWriter, r *http.Request)
 
 	user, err = cfg.DB.UpdateUser(params.EMail, hashedPass, userID)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "User already exists")
+		respondWithError(w, http.StatusInternalServerError, "Couldn't update the user")
 		return
 	}
-	respondWithJSON(w, http.StatusCreated, ReturnUser{
+	respondWithJSON(w, http.StatusOK, ReturnUser{
 		ID:    user.ID,
 		EMail: user.EMail,
 	})
