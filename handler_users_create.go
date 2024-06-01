@@ -8,9 +8,10 @@ import (
 )
 
 type ReturnUser struct {
-	ID    int    `json:"id"`
-	EMail string `json:"email"`
-	Token string `json:"token"`
+	ID           int    `json:"id"`
+	EMail        string `json:"email"`
+	RefreshToken string `json:"refresh_token"`
+	Token        string `json:"token"`
 }
 type User struct {
 	ID       int    `json:"id"`

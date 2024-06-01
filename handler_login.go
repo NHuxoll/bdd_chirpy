@@ -43,11 +43,12 @@ func (cfg *apiConfig) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
 	} else {
 		expTime = time.Duration(int(time.Second) * params.ExpireTime)
 	}
+	expTime++
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		&jwt.RegisteredClaims{
 			Issuer:    "chirpy",
 			IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
-			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(expTime)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(time.Hour)),
 			Subject:   strconv.Itoa(user.ID)})
 	jwt, err := token.SignedString([]byte(cfg.jwtSecret))
 	if err != nil {
