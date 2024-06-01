@@ -47,30 +47,3 @@ func (cfg *apiConfig) handlerUsersCreate(w http.ResponseWriter, r *http.Request)
 		EMail: user.EMail,
 	})
 }
-
-// func validateUser(body string) (string, error) {
-// 	const maxUserLength = 140
-// 	if len(body) > maxUserLength {
-// 		return "", errors.New("User is too long")
-// 	}
-//
-// 	badWords := map[string]struct{}{
-// 		"kerfuffle": {},
-// 		"sharbert":  {},
-// 		"fornax":    {},
-// 	}
-// 	cleaned := getCleanedBody(body, badWords)
-// 	return cleaned, nil
-// }
-
-// func getCleanedBody(body string, badWords map[string]struct{}) string {
-// 	words := strings.Split(body, " ")
-// 	for i, word := range words {
-// 		loweredWord := strings.ToLower(word)
-// 		if _, ok := badWords[loweredWord]; ok {
-// 			words[i] = "****"
-// 		}
-// 	}
-// 	cleaned := strings.Join(words, " ")
-// 	return cleaned
-// }
