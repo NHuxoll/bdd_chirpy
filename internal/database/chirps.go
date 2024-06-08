@@ -5,11 +5,12 @@ import (
 )
 
 type Chirp struct {
-	ID   int    `json:"id"`
-	Body string `json:"body"`
+	ID        int    `json:"id"`
+	Body      string `json:"body"`
+	Author_ID int    `json:"author_id"`
 }
 
-func (db *DB) CreateChirp(body string) (Chirp, error) {
+func (db *DB) CreateChirp(body string, author_id int) (Chirp, error) {
 	dbStructure, err := db.loadDB()
 	if err != nil {
 		return Chirp{}, err
@@ -17,8 +18,9 @@ func (db *DB) CreateChirp(body string) (Chirp, error) {
 
 	id := len(dbStructure.Chirps) + 1
 	chirp := Chirp{
-		ID:   id,
-		Body: body,
+		ID:        id,
+		Body:      body,
+		Author_ID: author_id,
 	}
 	dbStructure.Chirps[id] = chirp
 
@@ -57,4 +59,21 @@ func (db *DB) GetChirpById(id int) (Chirp, error) {
 
 		return chirp, nil
 	}
+}
+
+func (db *DB) DeleteChirp(chirpId, userId int) error {
+	dbStructure, err := db.loadDB()
+	if err != nil {
+		return err
+	}
+	chirp, ok := dbStructure.Chirps[chirpId]
+	if !ok {
+		return errors.New("Chirp not found")
+	}
+	if chirp.Author_ID != userId {
+		return errors.New("User not creator!")
+	}
+	delete(dbStructure.Chirps, chirpId)
+
+	return nil
 }
