@@ -12,11 +12,13 @@ type ReturnUser struct {
 	EMail        string `json:"email"`
 	RefreshToken string `json:"refresh_token"`
 	Token        string `json:"token"`
+	ChirpyRed    bool   `json:"is_chirpy_red"`
 }
 type User struct {
-	ID       int    `json:"id"`
-	EMail    string `json:"email"`
-	Password string `json:"password"`
+	ID        int    `json:"id"`
+	EMail     string `json:"email"`
+	Password  string `json:"password"`
+	ChirpyRed bool   `json:"is_chirpy_red"`
 }
 
 func (cfg *apiConfig) handlerUsersCreate(w http.ResponseWriter, r *http.Request) {
