@@ -12,6 +12,12 @@ func (cfg *apiConfig) handlerChirpsRetrieveAll(w http.ResponseWriter, r *http.Re
 		respondWithError(w, http.StatusInternalServerError, "Couldn't retrieve chirps")
 		return
 	}
+	sortOrder := "asc"
+
+	if r.URL.Query().Get("sort") == "desc" {
+		sortOrder = "desc"
+	}
+
 	if r.URL.Query().Has("author_id") && r.URL.Query().Get("author_id") != "" {
 		id := r.URL.Query().Get("author_id")
 		authorID, err := strconv.Atoi(id)
@@ -24,6 +30,15 @@ func (cfg *apiConfig) handlerChirpsRetrieveAll(w http.ResponseWriter, r *http.Re
 			respondWithError(w, http.StatusInternalServerError, "Couldn't retrieve the chirps")
 		}
 		if len(chirps) > 0 {
+
+			sort.Slice(chirps, func(i, j int) bool {
+				if sortOrder == "asc" {
+					return chirps[i].ID < chirps[j].ID
+				} else {
+
+					return chirps[i].ID > chirps[j].ID
+				}
+			})
 			respondWithJSON(w, http.StatusOK, chirps)
 		}
 	}
@@ -38,7 +53,12 @@ func (cfg *apiConfig) handlerChirpsRetrieveAll(w http.ResponseWriter, r *http.Re
 	}
 
 	sort.Slice(chirps, func(i, j int) bool {
-		return chirps[i].ID < chirps[j].ID
+		if sortOrder == "asc" {
+			return chirps[i].ID < chirps[j].ID
+		} else {
+
+			return chirps[i].ID > chirps[j].ID
+		}
 	})
 
 	respondWithJSON(w, http.StatusOK, chirps)
