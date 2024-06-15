@@ -12,6 +12,21 @@ func (cfg *apiConfig) handlerChirpsRetrieveAll(w http.ResponseWriter, r *http.Re
 		respondWithError(w, http.StatusInternalServerError, "Couldn't retrieve chirps")
 		return
 	}
+	if r.URL.Query().Has("author_id") && r.URL.Query().Get("author_id") != "" {
+		id := r.URL.Query().Get("author_id")
+		authorID, err := strconv.Atoi(id)
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "Couldn't parse author id")
+			return
+		}
+		chirps, err := cfg.DB.GetChirpByAuthorId(authorID)
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "Couldn't retrieve the chirps")
+		}
+		if len(chirps) > 0 {
+			respondWithJSON(w, http.StatusOK, chirps)
+		}
+	}
 
 	chirps := []Chirp{}
 	for _, dbChirp := range dbChirps {
